@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MSU 装备查询（Cloudflare 代理版）</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app-shell">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">MSU Equipment Viewer CF Proxy</p>
+        <h1>装备星级与属性详情</h1>
+        <p class="hero-copy">输入装备名称后，按铸造编号分页查询装备详情。此版本通过 Cloudflare Pages Function 代理请求 `msu.io`，适合解决浏览器 CORS 限制。</p>
+      </div>
+    </section>
+
+    <section class="panel controls-panel">
+      <form id="search-form" class="search-form">
+        <label class="field">
+          <span>装备名称</span>
+          <input
+            id="equipment-input"
+            name="equipmentName"
+            type="text"
+            placeholder="例如：Twilight Mark"
+            autocomplete="off"
+          >
+        </label>
+        <button id="search-button" type="submit">搜索</button>
+      </form>
+
+      <div class="options-row">
+        <span class="hint">页面只请求本站的 `/api/proxy`，再由 Cloudflare 边缘去请求 `msu.io`。不需要你自己额外开一台服务器。</span>
+      </div>
+
+      <div class="filter-row">
+        <label class="field small-field">
+          <span>最小星级</span>
+          <input id="star-min-input" type="number" min="0" max="25" placeholder="例如 15">
+        </label>
+        <label class="field small-field">
+          <span>最大星级</span>
+          <input id="star-max-input" type="number" min="0" max="25" placeholder="例如 22">
+        </label>
+        <button id="filter-button" type="button">筛选</button>
+      </div>
+      <p class="filter-hint">输入星级范围后点“筛选”，会遍历当前装备全部编号并展示所有命中的装备。清空两个输入再点一次，可恢复分页视图。</p>
+
+      <div id="status-banner" class="status-banner idle">等待输入装备名称。</div>
+    </section>
+
+    <section class="panel summary-panel">
+      <div class="summary-header">
+        <h2>查询摘要</h2>
+        <span id="summary-badge" class="badge">未查询</span>
+      </div>
+      <div id="summary-grid" class="summary-grid">
+        <article class="summary-item">
+          <span class="summary-label">装备名称</span>
+          <strong id="summary-name">-</strong>
+        </article>
+        <article class="summary-item">
+          <span class="summary-label">itemId</span>
+          <strong id="summary-item-id">-</strong>
+        </article>
+        <article class="summary-item">
+          <span class="summary-label">已铸造数量</span>
+          <strong id="summary-minted-count">-</strong>
+        </article>
+        <article class="summary-item">
+          <span class="summary-label">当前页</span>
+          <strong id="summary-page">-</strong>
+        </article>
+        <article class="summary-item">
+          <span class="summary-label">编号范围</span>
+          <strong id="summary-range">-</strong>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel pagination-panel">
+      <div id="pagination-controls" class="pagination-controls"></div>
+    </section>
+
+    <section class="panel list-panel">
+      <div class="list-header">
+        <h2>装备列表</h2>
+        <span id="list-meta" class="list-meta">暂无数据</span>
+      </div>
+      <div id="equipment-list" class="equipment-list empty">
+        <p class="empty-state">搜索后会在这里显示当前页装备详情。</p>
+      </div>
+    </section>
+  </main>
+
+  <template id="equipment-card-template">
+    <article class="equipment-card">
+      <div class="owner-banner" data-field="ownerDisplay">-</div>
+      <div class="card-head">
+        <div class="card-title-wrap">
+          <div class="star-line" data-field="starLine"></div>
+          <h3 class="card-title"></h3>
+          <p class="card-subtitle" data-field="itemSubtitle"></p>
+        </div>
+        <span class="card-status"></span>
+      </div>
+
+      <div class="stats-panel">
+        <h4>Stats</h4>
+        <ul data-field="statLines" class="stat-lines"></ul>
+      </div>
+
+      <div class="potential-grid">
+        <section class="potential-panel">
+          <div class="potential-heading">
+            <span data-field="potentialGradeBadge" class="grade-badge">-</span>
+            <h4>Potential</h4>
+          </div>
+          <ul data-field="potentialList" class="potential-list"></ul>
+        </section>
+
+        <section class="potential-panel">
+          <div class="potential-heading">
+            <span data-field="bonusPotentialGradeBadge" class="grade-badge">-</span>
+            <h4>Bonus Potential</h4>
+          </div>
+          <ul data-field="bonusPotentialList" class="potential-list"></ul>
+        </section>
+      </div>
+      <p data-field="error" class="card-error hidden"></p>
+    </article>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>
